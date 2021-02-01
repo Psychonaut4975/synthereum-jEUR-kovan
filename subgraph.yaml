@@ -1,0 +1,53 @@
+specVersion: 0.0.1
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Contract
+    network: kovan
+    source:
+      address: "0xf8be24f14D5FD3395eB3b33b27e1606271CE8242"
+      abi: Contract
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.2
+      language: wasm/assemblyscript
+      entities:
+        - AddDerivative
+        - Exchange
+        - Mint
+        - Redeem
+        - RemoveDerivative
+        - RoleAdminChanged
+        - RoleGranted
+        - RoleRevoked
+        - SetFeePercentage
+        - SetFeeRecipients
+        - Settlement
+      abis:
+        - name: Contract
+          file: ./abis/Contract.json
+      eventHandlers:
+        - event: AddDerivative(indexed address,indexed address)
+          handler: handleAddDerivative
+        - event: Exchange(indexed address,indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleExchange
+        - event: Mint(indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleMint
+        - event: Redeem(indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleRedeem
+        - event: RemoveDerivative(indexed address,indexed address)
+          handler: handleRemoveDerivative
+        - event: RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
+          handler: handleRoleAdminChanged
+        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleGranted
+        - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleRevoked
+        - event: SetFeePercentage(uint256)
+          handler: handleSetFeePercentage
+        - event: SetFeeRecipients(address[],uint32[])
+          handler: handleSetFeeRecipients
+        - event: Settlement(indexed address,indexed address,uint256,uint256)
+          handler: handleSettlement
+      file: ./src/mapping.ts
