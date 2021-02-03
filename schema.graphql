@@ -1,6 +1,38 @@
-type ExampleEntity @entity {
-  id: ID!
-  count: BigInt!
-  pool: Bytes! # address
-  derivative: Bytes! # address
+#  type User @entity { 
+#   id: ID!
+#   address: Bytes!
+# } 
+
+type Mint @entity {
+    id: ID!
+    address: Bytes!
+    pool: Bytes!
+    collateralSent: BigDecimal!
+    feePaid: BigDecimal!
+    numTokensReceived: BigDecimal!
+}
+
+type Redeem @entity {
+    id: ID!
+    address: Bytes!
+    pool: Bytes!
+    collateralReceived: BigDecimal!
+    feePaid: BigDecimal!
+    numTokensSent: BigDecimal!
+}
+
+type Exchange @entity { 
+    id: ID!
+    address: Bytes!
+    destNumTokensReceived: BigInt!
+    destPool: Bytes!
+    feePaid: BigDecimal!
+    numTokensSent: BigDecimal!
+    sourcePool: Bytes!
+}
+
+type PoolDeposit @entity { 
+    id: ID!
+    address: Bytes! #LP address
+    amount: BigDecimal!
 }

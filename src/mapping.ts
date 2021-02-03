@@ -1,4 +1,5 @@
-import { BigInt } from "@graphprotocol/graph-ts"
+
+/////
 import {
   Contract,
   AddDerivative,
@@ -13,31 +14,56 @@ import {
   SetFeeRecipients,
   Settlement
 } from "../generated/Contract/Contract"
-import { ExampleEntity } from "../generated/schema"
 
-export function handleAddDerivative(event: AddDerivative): void {
-  // Entities can be loaded from the store using a string ID; this ID
-  // needs to be unique across all entities of the same type
-  let entity = ExampleEntity.load(event.transaction.from.toHex())
+import {
+  Transfer
+} from "../generated/USDC-Contract/Contract";
 
-  // Entities only exist after they have been saved to the store;
-  // `null` checks allow to create entities on demand
-  if (entity == null) {
-    entity = new ExampleEntity(event.transaction.from.toHex())
 
-    // Entity fields can be set using simple assignments
-    entity.count = BigInt.fromI32(0)
-  }
+//ENTITIES
+import {
+  Mint as MintEntity, 
+  Redeem as RedeemEntity,
+  Exchange as ExchangeEntity,
+  PoolDeposit as PoolDepositEntity
+} from "../generated/schema"
 
-  // BigInt and BigDecimal math are supported
-  entity.count = entity.count + BigInt.fromI32(1)
 
-  // Entity fields can be set based on event parameters
-  entity.pool = event.params.pool
-  entity.derivative = event.params.derivative
+//UTILS
+import {ethereum, BigDecimal, BigInt, Value, Address} from "@graphprotocol/graph-ts"
 
-  // Entities can be written to the store with `.save()`
-  entity.save()
+
+const JEUR_CONTRACT_ADDRESS = Address.fromHexString("f8be24f14D5FD3395eB3b33b27e1606271CE8242");
+const USDC_CONTRACT_DECIMAL_COUNT = -6;
+const USDC_CONTRACT_DECIMAL_MULTIPLIER = 10 ** USDC_CONTRACT_DECIMAL_COUNT;
+
+const JEUR_DECIMAL_COUNT = -18;
+const JEUR_DECIMAL_MULTIPLIER = 10 ** JEUR_DECIMAL_COUNT;
+
+
+export function handleAddDerivative (event: AddDerivative): void {
+  // // Entities can be loaded from the store using a string ID; this ID
+  // // needs to be unique across all entities of the same type
+  // let entity = ExampleEntity.load(event.transaction.from.toHex())
+
+  // // Entities only exist after they have been saved to the store;
+  // // `null` checks allow to create entities on demand
+  // if (entity == null) {
+  //   entity = new ExampleEntity(event.transaction.from.toHex())
+
+  //   // Entity fields can be set using simple assignments
+  //   entity.count = BigInt.fromI32(0)
+  // }
+
+  // // BigInt and BigDecimal math are supported
+  // entity.count = entity.count + BigInt.fromI32(1)
+
+  // // Entity fields can be set based on event parameters
+  // entity.pool = event.params.pool
+  // entity.derivative = event.params.derivative
+
+  // // Entities can be written to the store with `.save()`
+  // entity.save()
 
   // Note: If a handler doesn't require existing field values, it is faster
   // _not_ to load the entity from the store. Instead, create it fresh with
@@ -86,11 +112,52 @@ export function handleAddDerivative(event: AddDerivative): void {
   // - contract.calculateFee(...)
 }
 
-export function handleExchange(event: Exchange): void {}
 
-export function handleMint(event: Mint): void {}
+type EventParam = ethereum.EventParam;
 
-export function handleRedeem(event: Redeem): void {}
+function usdc_decimal_value(value: BigInt): BigDecimal {
+  return value.toBigDecimal().times(BigDecimal.fromString(USDC_CONTRACT_DECIMAL_MULTIPLIER.toString()));
+}
+
+function jeur_decimal_value(value: BigInt): BigDecimal {
+  return value.toBigDecimal().times(BigDecimal.fromString(JEUR_DECIMAL_MULTIPLIER.toString()));
+}
+
+export function handleExchange(event: Exchange): void {
+  let exchange = new ExchangeEntity(event.transaction.hash.toHex()); //change id ?
+  
+  exchange.address = event.params.account;
+  exchange.destNumTokensReceived = event.params.destNumTokensReceived;
+  exchange.destPool = event.params.destPool;
+  exchange.feePaid = usdc_decimal_value(event.params.feePaid);
+  exchange.numTokensSent = jeur_decimal_value(event.params.numTokensSent);
+  exchange.sourcePool = event.params.sourcePool;
+  
+  exchange.save();
+}
+
+export function handleMint(event: Mint): void {
+  let mint = new MintEntity(event.transaction.hash.toHex()); //change id ?
+
+  mint.pool = event.params.pool;
+  mint.address = event.params.account;
+  mint.collateralSent = usdc_decimal_value(event.params.collateralSent);
+  mint.feePaid = usdc_decimal_value(event.params.feePaid);
+  mint.numTokensReceived = jeur_decimal_value(event.params.numTokensReceived);
+  mint.save();
+}
+
+
+export function handleRedeem(event: Redeem): void {
+  let mint = new RedeemEntity(event.transaction.hash.toHex()); //change id ?
+
+  mint.address = event.params.account;
+  mint.pool = event.params.pool;
+  mint.collateralReceived = usdc_decimal_value(event.params.collateralReceived);
+  mint.feePaid = usdc_decimal_value(event.params.feePaid);
+  mint.numTokensSent = jeur_decimal_value(event.params.numTokensSent);
+  mint.save();
+}
 
 export function handleRemoveDerivative(event: RemoveDerivative): void {}
 
@@ -104,4 +171,23 @@ export function handleSetFeePercentage(event: SetFeePercentage): void {}
 
 export function handleSetFeeRecipients(event: SetFeeRecipients): void {}
 
-export function handleSettlement(event: Settlement): void {}
+export function handleSettlement(event: Settlement): void {
+  
+}
+
+
+
+//USDC CONTRACT 
+
+export function handleUSDC_Transfer(event: Transfer): void {
+  var from = event.params.from;
+  var to = event.params.to;
+  if(to.equals(JEUR_CONTRACT_ADDRESS)){
+    var pool_deposit = new PoolDepositEntity(event.transaction.hash.toHex());
+    pool_deposit.address = from;
+    pool_deposit.amount = usdc_decimal_value(event.params.value);
+    pool_deposit.save();
+  }
+
+}
+

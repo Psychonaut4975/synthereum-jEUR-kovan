@@ -1,4 +1,6 @@
-specVersion: 0.0.1
+specVersion: 0.0.2
+description: This subgraph aims to collect all the trx interacting with the jEUR Kovan Sponsoring Contract
+repository: https://github.com/Psychonaut4975/synthereum-jEUR-kovan
 schema:
   file: ./schema.graphql
 dataSources:
@@ -6,11 +8,12 @@ dataSources:
     name: Contract
     network: kovan
     source:
-      address: "0xf8be24f14D5FD3395eB3b33b27e1606271CE8242"
+      address: "0xf8be24f14D5FD3395eB3b33b27e1606271CE8242" #must be changed in several places
       abi: Contract
+      startBlock: 23037401
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.2
+      apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
         - AddDerivative
@@ -50,4 +53,25 @@ dataSources:
           handler: handleSetFeeRecipients
         - event: Settlement(indexed address,indexed address,uint256,uint256)
           handler: handleSettlement
+      file: ./src/mapping.ts
+
+  - kind: ethereum/contract
+    name: USDC-Contract
+    network: kovan
+    source:
+      address: "0xe22da380ee6B445bb8273C81944ADEB6E8450422"
+      abi: Contract
+      startBlock: 23192431
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - PoolDeposit
+      abis:
+        - name: Contract
+          file: ./abis/ierc20-abi.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleUSDC_Transfer
       file: ./src/mapping.ts
