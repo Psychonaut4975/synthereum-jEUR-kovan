@@ -34,11 +34,8 @@ import {ethereum, BigDecimal, BigInt, Value, Address} from "@graphprotocol/graph
 
 
 const JEUR_CONTRACT_ADDRESS = Address.fromHexString("f8be24f14D5FD3395eB3b33b27e1606271CE8242");
-const USDC_CONTRACT_DECIMAL_COUNT = -6;
-const USDC_CONTRACT_DECIMAL_MULTIPLIER = 10 ** USDC_CONTRACT_DECIMAL_COUNT;
-
-const JEUR_DECIMAL_COUNT = -18;
-const JEUR_DECIMAL_MULTIPLIER = 10 ** JEUR_DECIMAL_COUNT;
+const USDC_CONTRACT_DECIMAL_MULTIPLIER = 10 ** -6;
+const JEUR_DECIMAL_MULTIPLIER = 10 ** -18;
 
 
 export function handleAddDerivative (event: AddDerivative): void {
@@ -116,10 +113,12 @@ export function handleAddDerivative (event: AddDerivative): void {
 type EventParam = ethereum.EventParam;
 
 function usdc_decimal_value(value: BigInt): BigDecimal {
+  //simpler conversion ?
   return value.toBigDecimal().times(BigDecimal.fromString(USDC_CONTRACT_DECIMAL_MULTIPLIER.toString()));
 }
 
 function jeur_decimal_value(value: BigInt): BigDecimal {
+  //simpler conversion ?
   return value.toBigDecimal().times(BigDecimal.fromString(JEUR_DECIMAL_MULTIPLIER.toString()));
 }
 
@@ -132,6 +131,7 @@ export function handleExchange(event: Exchange): void {
   exchange.feePaid = usdc_decimal_value(event.params.feePaid);
   exchange.numTokensSent = jeur_decimal_value(event.params.numTokensSent);
   exchange.sourcePool = event.params.sourcePool;
+  exchange.timestamp = event.block.timestamp;
   
   exchange.save();
 }
@@ -144,19 +144,23 @@ export function handleMint(event: Mint): void {
   mint.collateralSent = usdc_decimal_value(event.params.collateralSent);
   mint.feePaid = usdc_decimal_value(event.params.feePaid);
   mint.numTokensReceived = jeur_decimal_value(event.params.numTokensReceived);
+  mint.timestamp = event.block.timestamp;
+  
   mint.save();
 }
 
 
 export function handleRedeem(event: Redeem): void {
-  let mint = new RedeemEntity(event.transaction.hash.toHex()); //change id ?
+  let redeem = new RedeemEntity(event.transaction.hash.toHex()); //change id ?
 
-  mint.address = event.params.account;
-  mint.pool = event.params.pool;
-  mint.collateralReceived = usdc_decimal_value(event.params.collateralReceived);
-  mint.feePaid = usdc_decimal_value(event.params.feePaid);
-  mint.numTokensSent = jeur_decimal_value(event.params.numTokensSent);
-  mint.save();
+  redeem.address = event.params.account;
+  redeem.pool = event.params.pool;
+  redeem.collateralReceived = usdc_decimal_value(event.params.collateralReceived);
+  redeem.feePaid = usdc_decimal_value(event.params.feePaid);
+  redeem.numTokensSent = jeur_decimal_value(event.params.numTokensSent);
+  redeem.timestamp = event.block.timestamp;
+
+  redeem.save();
 }
 
 export function handleRemoveDerivative(event: RemoveDerivative): void {}
@@ -186,6 +190,8 @@ export function handleUSDC_Transfer(event: Transfer): void {
     var pool_deposit = new PoolDepositEntity(event.transaction.hash.toHex());
     pool_deposit.address = from;
     pool_deposit.amount = usdc_decimal_value(event.params.value);
+    pool_deposit.timestamp = event.block.timestamp;
+    
     pool_deposit.save();
   }
 

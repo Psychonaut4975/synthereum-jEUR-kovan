@@ -10,6 +10,7 @@ type Mint @entity {
     collateralSent: BigDecimal!
     feePaid: BigDecimal!
     numTokensReceived: BigDecimal!
+    timestamp: BigInt!
 }
 
 type Redeem @entity {
@@ -19,6 +20,7 @@ type Redeem @entity {
     collateralReceived: BigDecimal!
     feePaid: BigDecimal!
     numTokensSent: BigDecimal!
+    timestamp: BigInt!
 }
 
 type Exchange @entity { 
@@ -29,10 +31,12 @@ type Exchange @entity {
     feePaid: BigDecimal!
     numTokensSent: BigDecimal!
     sourcePool: Bytes!
+    timestamp: BigInt!
 }
 
 type PoolDeposit @entity { 
     id: ID!
     address: Bytes! #LP address
     amount: BigDecimal!
+    timestamp: BigInt!
 }
